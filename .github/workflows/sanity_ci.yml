@@ -27,12 +27,16 @@ jobs:
       - name: Show Azure account and ACR details
         run: |
           az account show -o table
-          az acr show -n "$ACR_NAME" -o table
+          # This ARM read can fail if SP lacks Reader; don't block the run
+          az acr show -n "$ACR_NAME" -o table || echo "Skipping az acr show (no Reader role)."
           echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER"
           echo "ACR_NAME=$ACR_NAME"
 
       - name: ACR login (CLI)
         run: az acr login --name "$ACR_NAME"
+
+      - name: List ACR repos (sanity)
+        run: az acr repository list -n "$ACR_NAME" -o table || echo "No repos yet (that's OK)."
 
       - name: Print versions (debug)
         run: |
